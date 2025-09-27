@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+            <i class="fas fa-upload"></i> Upload Document
+        </button>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_docs }}</h4>
+                        <p>Total Documents</p>
+                    </div>
+                    <i class="fas fa-file fa-3x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_size }} MB</h4>
+                        <p>Storage Used</p>
+                    </div>
+                    <i class="fas fa-database fa-3x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_docs }}</h4>
+                        <p>Files Available</p>
+                    </div>
+                    <i class="fas fa-check-circle fa-3x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Simple Search Bar (Optional - you can remove if not needed) -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="input-group">
+            <input type="text" class="form-control" id="searchInput" placeholder="Filter documents by name...">
+            <button class="btn btn-outline-secondary" type="button" onclick="filterDocuments()">
+                <i class="fas fa-search"></i> Filter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Documents List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-files"></i> Documents ({{ documents|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if documents %}
+            <div class="table-responsive">
+                <table class="table table-striped" id="documentsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Upload Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr class="doc-row">
+                            <td class="doc-name">
+                                <strong>{{ doc.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ doc.storage_name }}</small>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ doc.type|upper }}</span></td>
+                            <td>{{ (doc.size / 1024)|round(2) }} KB</td>
+                            <td>{{ doc.upload_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="/download/{{ doc.storage_name }}" 
+                                   class="btn btn-success btn-sm" 
+                                   target="_blank">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                <a href="/delete/{{ doc.storage_name }}" 
+                                   class="btn btn-danger btn-sm" 
+                                   onclick="return confirm('Delete {{ doc.name }}?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No documents found. Upload your first document to get started!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">Choose file (Max: 16MB)</label>
+                        <input class="form-control" type="file" id="fileInput" name="file" required
+                               accept=".pdf,.txt,.doc,.docx,.png,.jpg,.jpeg,.yaml,.yml">
+                        <div class="form-text">
+                            Supported formats: PDF, TXT, DOC, DOCX, PNG, JPG, JPEG, YAML
+                        </div>
+                    </div>
+                    <div class="progress mb-3" style="display: none;" id="uploadProgress">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="uploadFile()" id="uploadButton">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function uploadFile() {
+    const fileInput = document.getElementById('fileInput');
+    const uploadButton = document.getElementById('uploadButton');
+    const progressBar = document.getElementById('uploadProgress');
+    
+    if (fileInput.files.length === 0) {
+        alert('Please select a file');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const maxSize = 16 * 1024 * 1024; // 16MB
+    
+    if (file.size > maxSize) {
+        alert('File too large. Maximum size is 16MB.');
+        return;
+    }
+    
+    // Disable button and show progress
+    uploadButton.disabled = true;
+    uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    progressBar.style.display = 'block';
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('File uploaded successfully!');
+            // Close modal and reload page
+            const modal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
+            modal.hide();
+            location.reload();
+        } else {
+            alert('Upload failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Upload error: ' + error);
+    })
+    .finally(() => {
+        // Re-enable button
+        uploadButton.disabled = false;
+        uploadButton.innerHTML = '<i class="fas fa-upload"></i> Upload';
+        progressBar.style.display = 'none';
+    });
+}
+
+function filterDocuments() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('.doc-row');
+    
+    rows.forEach(row => {
+        const fileName = row.querySelector('.doc-name').textContent.toLowerCase();
+        if (fileName.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Add event listener for Enter key in search
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        filterDocuments();
+    }
+});
+
+// Reset search when modal is closed
+document.getElementById('uploadModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('fileInput').value = '';
+});
+</script>
+{% endblock %}

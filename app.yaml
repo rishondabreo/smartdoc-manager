@@ -1,0 +1,12 @@
+runtime: python311
+entrypoint: gunicorn -b :$PORT main:app
+
+env_variables:
+  CLOUD_STORAGE_BUCKET: "stellar-sunrise-473213-g6"
+  SECRET_KEY: "your-production-secret-key-change-this"
+
+instance_class: F2
+
+handlers:
+- url: /.*
+  script: auto

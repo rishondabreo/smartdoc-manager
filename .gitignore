@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Google Cloud
+key.json
+*.key
+*.json
+.env
+secrets.py
+
+# OS
+.DS_Store
+Thumbs.db
+
+# App Engine
+.gcloudignore

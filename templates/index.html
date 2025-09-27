@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <h1 class="display-4 text-primary">
+                    <i class="fas fa-brain"></i> SmartDoc Manager
+                </h1>
+                <p class="lead">AI-Powered Document Management System</p>
+                <p class="text-muted">Upload, analyze, and manage your documents with artificial intelligence</p>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt"></i> Login to Get Started
+                    </a>
+                </div>
+                
+                <div class="row mt-5">
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-primary"></i>
+                            <h5>Cloud Storage</h5>
+                            <p>Secure cloud-based document storage</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <i class="fas fa-robot fa-3x text-primary"></i>
+                            <h5>AI Analysis</h5>
+                            <p>Automated text extraction and analysis</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <i class="fas fa-search fa-3x text-primary"></i>
+                            <h5>Smart Search</h5>
+                            <p>Find documents by content</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
